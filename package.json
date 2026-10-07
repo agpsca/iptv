@@ -34,5 +34,8 @@
     "braces": ">=3.0.3",
     "micromatch": ">=4.0.8",
     "fast-glob": ">=3.3.3"
+  },
+  "allowScripts": {
+    "unrs-resolver": false
   }
 }
