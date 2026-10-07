@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "check": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON src/lib/iptv.check.ts"
+    "check": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON src/lib/iptv.check.ts",
+    "cleanup": "bash scripts/cleanup.sh",
+    "cleanup:cache": "bash scripts/cleanup.sh --cache-only",
+    "setup": "bash scripts/install.sh"
   },
   "dependencies": {
     "next": "16.4.0",
