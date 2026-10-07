@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# iptv
 
-## Getting Started
+Catálogo de canais de TV e gerador de playlist M3U, usando os dados públicos da
+[API do iptv-org](https://github.com/iptv-org/api).
 
-First, run the development server:
+## Rodando
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev     # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+A primeira requisição baixa ~14MB de JSON da API do iptv-org; depois os
+datasets ficam em memória por 12h.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Outros scripts: `npm run build` + `npm start` (produção), `npm run lint`,
+e `npm run check` (self-check do filtro e do builder M3U, sem framework).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## O que tem
 
-## Learn More
+- **`/`** — listagem com busca por nome/apelido/rede, filtro por país e
+  categoria, toggles de encerrados e NSFW, paginação. Os filtros são um
+  `<form method="GET">`, então o estado vive na URL e funciona sem JS.
+- **`/channel/[id]`** — metadados do canal e streams disponíveis.
+- **`/playlist.m3u`** — playlist M3U estendida gerada a partir dos mesmos
+  filtros da listagem. Aceita `q`, `country`, `category`, `id`, `nsfw=1`,
+  `closed=1`.
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+curl "localhost:3000/playlist.m3u?country=BR&category=news" -o br-news.m3u
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Inclui `tvg-id`, `tvg-logo`, `group-title` e as linhas `#EXTVLCOPT` de
+`http-referrer` / `http-user-agent` quando o stream exige.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Estrutura
 
-## Deploy on Vercel
+| Arquivo | Papel |
+| --- | --- |
+| `src/lib/iptv.ts` | carga memoizada dos datasets, tipos, `filterChannels`, parse/serialização dos filtros |
+| `src/lib/m3u.ts` | `buildM3U` (puro) e `buildPlaylist` (cruza streams + canais + logos + feeds) |
+| `src/lib/iptv.check.ts` | self-check com `node:assert` |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Notas
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Canais na [blocklist](https://iptv-org.github.io/api/blocklist.json) do
+  iptv-org (DMCA/NSFW) são sempre excluídos da playlist gerada.
+- Os dados são de terceiros e tratados como não confiáveis: atributos têm
+  caracteres de controle e aspas removidos, e só URLs `http(s)` de uma única
+  linha entram na playlist — sem isso um `\n` nos dados injetaria entradas
+  falsas.
+- Os datasets não cabem no data cache do Next (limite de 2MB por entrada),
+  por isso o cache em memória no módulo em vez de `fetch` cacheado.
+
+Este projeto não hospeda nem redistribui conteúdo: apenas consome os índices
+públicos do iptv-org.
