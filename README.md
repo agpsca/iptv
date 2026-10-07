@@ -5,6 +5,9 @@ Catálogo de canais de TV e gerador de playlist M3U, usando os dados públicos d
 
 ## Rodando
 
+Requer Node 22.18+ (o Next 16 aceita 20.9+, mas o `npm run check` usa o type
+stripping nativo, que só vem habilitado por padrão a partir do 22.18).
+
 ```bash
 npm install
 npm run dev     # http://localhost:3000
