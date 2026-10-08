@@ -22,8 +22,10 @@ e `npm run check` (self-check do filtro e do builder M3U, sem framework).
 ## O que tem
 
 - **`/`** — listagem com busca por nome/apelido/rede, filtro por país e
-  categoria, toggles de encerrados e NSFW, paginação. Os filtros são um
-  `<form method="GET">`, então o estado vive na URL e funciona sem JS.
+  categoria, toggles de encerrados e NSFW, paginação. A barra de filtros usa
+  componentes shadcn (`Select`/`Checkbox`/`Input`, estilo `base-nova` sobre
+  `@base-ui/react`) num client component que escreve o estado na URL via
+  `router.push` — o SSR continua fazendo a filtragem a partir do query string.
 - **`/channel/[id]`** — metadados do canal e streams disponíveis.
 - **`/playlist.m3u`** — playlist M3U estendida gerada a partir dos mesmos
   filtros da listagem. Aceita `q`, `country`, `category`, `id`, `nsfw=1`,
@@ -46,8 +48,6 @@ Inclui `tvg-id`, `tvg-logo`, `group-title` e as linhas `#EXTVLCOPT` de
 
 ## Notas
 
-- Canais na [blocklist](https://iptv-org.github.io/api/blocklist.json) do
-  iptv-org (DMCA/NSFW) são sempre excluídos da playlist gerada.
 - Os dados são de terceiros e tratados como não confiáveis: atributos têm
   caracteres de controle e aspas removidos, e só URLs `http(s)` de uma única
   linha entram na playlist — sem isso um `\n` nos dados injetaria entradas

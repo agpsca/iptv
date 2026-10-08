@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { ArrowLeft, Download, Tv } from "lucide-react";
 import {
   getCategories,
   getChannels,
@@ -8,11 +9,15 @@ import {
   getLogoMap,
   getStreams,
 } from "@/lib/iptv";
+import { buttonVariants } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
-// Depende de params + fetch remoto: renderiza sob demanda, sem prerender.
 export const instant = false;
 
-async function findChannel(rawId: string) {  const id = decodeURIComponent(rawId);
+async function findChannel(rawId: string) {
+  const id = decodeURIComponent(rawId);
   const channels = await getChannels();
   return channels.find((c) => c.id === id);
 }
@@ -48,7 +53,7 @@ export default async function ChannelPage({
   const channelStreams = streams.filter((s) => s.channel === channel.id);
 
   const facts: [string, React.ReactNode][] = [
-    ["ID", <code key="id">{channel.id}</code>],
+    ["ID", <code key="id" className="font-mono text-xs">{channel.id}</code>],
     ["País", country ? `${country.flag} ${country.name}` : channel.country],
     [
       "Categorias",
@@ -64,7 +69,7 @@ export default async function ChannelPage({
       channel.replaced_by ? (
         <Link
           key="rep"
-          className="underline hover:no-underline"
+          className="font-medium underline underline-offset-4 hover:no-underline"
           href={`/channel/${encodeURIComponent(channel.replaced_by)}`}
         >
           {channel.replaced_by}
@@ -77,89 +82,117 @@ export default async function ChannelPage({
   ];
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8">
-      <Link href="/" className="text-sm text-neutral-500 underline hover:no-underline">
-        ← Voltar
+    <main className="mx-auto w-full max-w-3xl px-4 py-6 sm:py-8">
+      <Link
+        href="/"
+        className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "-ml-2")}
+      >
+        <ArrowLeft />
+        Voltar
       </Link>
 
-      <div className="mt-6 flex items-center gap-4">
-        <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded bg-neutral-100 dark:bg-neutral-900">
-          {logo ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={logo}
-              alt={`Logo do canal ${channel.name}`}
-              className="max-h-20 max-w-20 object-contain"
-            />
-          ) : (
-            <span aria-hidden className="text-3xl text-neutral-400">
-              📺
-            </span>
-          )}
-        </div>
-        <div>
-          <h1 className="text-2xl font-semibold">{channel.name}</h1>
-          {channel.website && (
-            <a
-              className="text-sm underline hover:no-underline"
-              href={channel.website}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {channel.website}
-            </a>
-          )}
-        </div>
-      </div>
-
-      <dl className="mt-8 grid grid-cols-[10rem_1fr] gap-y-2 text-sm">
-        {facts.map(([label, value]) => (
-          <div key={label} className="contents">
-            <dt className="text-neutral-500">{label}</dt>
-            <dd className="break-words">{value}</dd>
+      <Card className="mt-6">
+        <CardHeader className="flex-row items-center gap-4 space-y-0">
+          <div className="bg-muted/40 relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-xl ring-1 ring-border/50 sm:size-24">
+            {logo ? (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={logo}
+                  alt=""
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 size-full scale-150 object-cover opacity-40 blur-2xl"
+                />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={logo}
+                  alt={`Logo do canal ${channel.name}`}
+                  className="relative max-h-[70%] max-w-[70%] object-contain drop-shadow-sm"
+                />
+              </>
+            ) : (
+              <Tv aria-hidden className="text-muted-foreground/50 size-8 sm:size-10" />
+            )}
           </div>
-        ))}
-      </dl>
+          <div className="min-w-0">
+            <CardTitle className="truncate text-xl font-semibold tracking-tight sm:text-2xl">
+              {channel.name}
+            </CardTitle>
+            {channel.website && (
+              <a
+                className="text-muted-foreground text-sm underline underline-offset-4 hover:no-underline"
+                href={channel.website}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {channel.website}
+              </a>
+            )}
+          </div>
+        </CardHeader>
+
+        <CardContent>
+          <dl className="grid gap-y-1 text-sm sm:grid-cols-[10rem_1fr] sm:gap-y-2.5">
+            {facts.map(([label, value]) => (
+              <div
+                key={label}
+                className="border-border/40 flex flex-col border-b py-1.5 last:border-0 sm:contents sm:border-0 sm:py-0"
+              >
+                <dt className="text-muted-foreground">{label}</dt>
+                <dd className="wrap-break-word">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </CardContent>
+      </Card>
 
       <section className="mt-8">
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg font-semibold">
             Streams ({channelStreams.length})
           </h2>
           {channelStreams.length > 0 && (
             <a
               href={`/playlist.m3u?id=${encodeURIComponent(channel.id)}`}
-              className="rounded border border-neutral-300 px-3 py-1.5 text-sm hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-900"
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
             >
-              ⬇ Baixar M3U
+              <Download />
+              Baixar M3U
             </a>
           )}
         </div>
         {channelStreams.length === 0 ? (
-          <p className="text-sm text-neutral-500">
-            Nenhum stream público catalogado para este canal.
-          </p>
+          <Card className="py-8">
+            <CardContent className="text-muted-foreground text-center text-sm">
+              Nenhum stream público catalogado para este canal.
+            </CardContent>
+          </Card>
         ) : (
-          <ul className="space-y-2 text-sm">
+          <ul className="space-y-2">
             {channelStreams.map((s) => (
-              <li
-                key={s.url}
-                className="rounded border border-neutral-200 p-3 dark:border-neutral-800"
-              >
-                <p className="font-medium">
-                  {s.title}
-                  {s.quality && (
-                    <span className="ml-2 rounded bg-neutral-200 px-1.5 py-0.5 text-xs dark:bg-neutral-800">
-                      {s.quality}
-                    </span>
-                  )}
-                </p>
-                <p className="mt-1 break-all text-xs text-neutral-500">{s.url}</p>
-                {s.labels.length > 0 && (
-                  <p className="mt-1 text-xs text-amber-600">
-                    {s.labels.join(" · ")}
-                  </p>
-                )}
+              <li key={s.url}>
+                <Card className="gap-2 py-3">
+                  <CardContent className="flex flex-col gap-1">
+                    <CardTitle className="flex items-center gap-2 text-sm font-medium">
+                      {s.title}
+                      {s.quality && (
+                        <Badge variant="secondary">{s.quality}</Badge>
+                      )}
+                    </CardTitle>
+                    <p className="text-muted-foreground break-all text-xs">
+                      {s.url}
+                    </p>
+                    {s.labels.length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {s.labels.map((label) => (
+                          <Badge key={label} variant="outline">
+                            {label}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </li>
             ))}
           </ul>

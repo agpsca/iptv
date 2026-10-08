@@ -4,7 +4,7 @@
  * channels.json tem ~8MB e logos.json ~5.7MB, acima do limite de 2MB do data
  * cache do Next, então os arquivos são memoizados em memória no módulo.
  *
- * ponytail: cache é por processo e só expira no restart (TTL abaixo). Se um dia
+ * O cache é por processo e só expira no restart (TTL abaixo). Se um dia
  * precisar de invalidação sob demanda, trocar por `unstable_cache`/Redis.
  */
 
@@ -71,12 +71,6 @@ export type Stream = {
   labels: string[];
 };
 
-export type Blocked = {
-  channel: string;
-  reason: "dmca" | "nsfw" | string;
-  ref: string;
-};
-
 type Entry<T> = { value: Promise<T> };
 const cache = new Map<string, Entry<unknown>>();
 
@@ -104,7 +98,6 @@ export const getCountries = () => load<Country[]>("countries");
 export const getCategories = () => load<Category[]>("categories");
 export const getStreams = () => load<Stream[]>("streams");
 export const getFeeds = () => load<Feed[]>("feeds");
-export const getBlocklist = () => load<Blocked[]>("blocklist");
 
 /**
  * Mapa de logos com duas chaves por logo: `channel` e `channel@feed`.
@@ -138,16 +131,30 @@ export type Filters = {
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
+/** País pré-selecionado na primeira visita (sem `country` na URL). */
+export const DEFAULT_COUNTRY = "BR";
+
+/** Sentinela para "todos os países", distinguindo-o da ausência do parâmetro. */
+export const ALL_COUNTRIES = "all";
+
 /** Lê os filtros do `searchParams` de uma page ou de uma URL de route handler. */
 export function parseFilters(sp: SearchParams | URLSearchParams): Filters {
+  const has = (key: string) =>
+    sp instanceof URLSearchParams ? sp.has(key) : sp[key] !== undefined;
   const get = (key: string) => {
     const value = sp instanceof URLSearchParams ? sp.get(key) : sp[key];
     return (Array.isArray(value) ? value[0] : value) || "";
   };
+
+  // Sem `country` na URL → aplica o país padrão. `country=all` → sem filtro
+  // (intenção explícita de "Todos", sem reverter ao padrão).
+  const rawCountry = has("country") ? get("country") : DEFAULT_COUNTRY;
+  const country = rawCountry === ALL_COUNTRIES ? "" : rawCountry;
+
   return {
     id: get("id"),
     q: get("q"),
-    country: get("country"),
+    country,
     category: get("category"),
     nsfw: get("nsfw") === "1",
     closed: get("closed") === "1",

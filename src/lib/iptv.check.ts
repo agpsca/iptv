@@ -1,6 +1,6 @@
 /** Check do filtro: `node src/lib/iptv.check.ts` (type stripping nativo do Node 22+). */
 import assert from "node:assert/strict";
-import { filterChannels, type Channel } from "./iptv.ts";
+import { filterChannels, parseFilters, type Channel } from "./iptv.ts";
 import { buildM3U, isPlayableUrl } from "./m3u.ts";
 
 const ch = (over: Partial<Channel>): Channel => ({
@@ -50,6 +50,17 @@ assert.deepEqual(ids({ country: "BR", category: "news" }), []);
 assert.deepEqual(ids({ id: "hot.br" }), ["hot.br"]);
 assert.deepEqual(ids({ id: "old.br", q: "nada a ver" }), ["old.br"]);
 assert.deepEqual(ids({ id: "nao.existe" }), []);
+
+// --- parseFilters: país padrão (BR) na primeira visita ---
+
+// Sem `country` na URL: assume BR.
+assert.equal(parseFilters({}).country, "BR");
+assert.equal(parseFilters(new URLSearchParams("")).country, "BR");
+// `country=all` é "Todos" explícito (sem filtro), não reverte ao padrão.
+assert.equal(parseFilters({ country: "all" }).country, "");
+assert.equal(parseFilters(new URLSearchParams("country=all")).country, "");
+// País explícito é respeitado.
+assert.equal(parseFilters({ country: "US" }).country, "US");
 
 // --- M3U ---
 

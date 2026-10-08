@@ -1,26 +1,282 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Paleta RATV. Cor de marca extraída do shader (SiteBackground):
+ *   --brand        ≈ #923434  (vermelho terroso)  -> primary
+ *   --brand-bg     ≈ #08030d  (quase preto arroxeado) -> fundo do tema escuro
+ * `:root` = tema claro; `.dark` = tema escuro (o do shader).
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --radius: 0.625rem;
+
+  /* superfícies claras com leve tom quente para harmonizar com o vermelho */
+  --background: oklch(0.985 0.004 60);
+  --foreground: oklch(0.19 0.02 20);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.19 0.02 20);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.19 0.02 20);
+
+  /* marca */
+  --primary: oklch(0.47 0.13 25);
+  --primary-foreground: oklch(0.985 0.01 60);
+  --secondary: oklch(0.95 0.015 40);
+  --secondary-foreground: oklch(0.3 0.05 25);
+  --muted: oklch(0.96 0.008 50);
+  --muted-foreground: oklch(0.52 0.03 30);
+  --accent: oklch(0.93 0.03 35);
+  --accent-foreground: oklch(0.3 0.06 25);
+
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.9 0.01 40);
+  --input: oklch(0.9 0.01 40);
+  --ring: oklch(0.47 0.13 25);
+
+  --chart-1: oklch(0.55 0.15 25);
+  --chart-2: oklch(0.6 0.12 45);
+  --chart-3: oklch(0.5 0.08 30);
+  --chart-4: oklch(0.65 0.1 60);
+  --chart-5: oklch(0.45 0.1 20);
+
+  --sidebar: oklch(0.98 0.006 50);
+  --sidebar-foreground: oklch(0.19 0.02 20);
+  --sidebar-primary: oklch(0.47 0.13 25);
+  --sidebar-primary-foreground: oklch(0.985 0.01 60);
+  --sidebar-accent: oklch(0.93 0.03 35);
+  --sidebar-accent-foreground: oklch(0.3 0.06 25);
+  --sidebar-border: oklch(0.9 0.01 40);
+  --sidebar-ring: oklch(0.47 0.13 25);
+}
+
+.dark {
+  /* fundo do shader */
+  --background: oklch(0.14 0.02 300);
+  --foreground: oklch(0.95 0.01 40);
+  --card: oklch(0.2 0.015 300);
+  --card-foreground: oklch(0.95 0.01 40);
+  --popover: oklch(0.2 0.015 300);
+  --popover-foreground: oklch(0.95 0.01 40);
+
+  /* marca (vermelho #923434 clareado para contraste no escuro) */
+  --primary: oklch(0.57 0.15 25);
+  --primary-foreground: oklch(0.98 0.01 40);
+  --secondary: oklch(0.28 0.03 20);
+  --secondary-foreground: oklch(0.95 0.01 40);
+  --muted: oklch(0.27 0.004 300);
+  --muted-foreground: oklch(0.72 0.008 40);
+  --accent: oklch(0.32 0.05 20);
+  --accent-foreground: oklch(0.96 0.01 40);
+
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.57 0.15 25);
+
+  --chart-1: oklch(0.63 0.16 25);
+  --chart-2: oklch(0.6 0.12 45);
+  --chart-3: oklch(0.55 0.08 30);
+  --chart-4: oklch(0.7 0.1 60);
+  --chart-5: oklch(0.5 0.12 20);
+
+  --sidebar: oklch(0.2 0.015 300);
+  --sidebar-foreground: oklch(0.95 0.01 40);
+  --sidebar-primary: oklch(0.57 0.15 25);
+  --sidebar-primary-foreground: oklch(0.98 0.01 40);
+  --sidebar-accent: oklch(0.32 0.05 20);
+  --sidebar-accent-foreground: oklch(0.96 0.01 40);
+  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-ring: oklch(0.57 0.15 25);
 }
 
 @theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply text-foreground;
+  }
+  html {
+    @apply bg-background font-sans;
+    /* `bg-background` segue o tema ativo (claro/escuro), cobrindo o fundo atrás
+       do shader e evitando flash branco em navegações. */
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* --- Loading premium: shimmer varrendo + respiro suave --- */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes loading-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklch, var(--foreground) 8%, transparent),
+    transparent
+  );
+  animation: shimmer 1.6s infinite;
+}
+
+.loading-fade-in {
+  animation: loading-fade-in 0.5s ease-out both;
+}
+
+/* --- Intro splash: "power-on" de TV CRT --- */
+
+/* 1) A tela aparece com um fade suave (sem power-on brusco). */
+@keyframes crt-power-on {
+  0% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* 2) Brilho quase imperceptível ao surgir. */
+@keyframes crt-flash {
+  0%,
+  10% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.07;
+  }
+  60%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* 3) Logo surge bem devagar, com escala/blur discretos, e permanece. */
+@keyframes crt-logo-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.985);
+    filter: blur(2px);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+/* 4) Overlay esmaece gentilmente no fim (fade longo). */
+@keyframes crt-intro-out {
+  0%,
+  72% {
+    opacity: 1;
+    visibility: visible;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+.crt-intro {
+  animation: crt-intro-out 5s ease-in-out forwards;
+}
+.crt-intro__screen {
+  animation: crt-power-on 5s ease-out forwards;
+}
+.crt-intro__flash {
+  animation: crt-flash 5s ease-out forwards;
+}
+.crt-intro__logo {
+  animation: crt-logo-in 5s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Sem movimento: mostra o logo brevemente e some, sem animações. */
+  .crt-intro {
+    animation: crt-intro-out 1.2s ease-in-out forwards;
+  }
+  .crt-intro__screen,
+  .crt-intro__flash,
+  .crt-intro__logo {
+    animation: none;
+  }
 }
