@@ -4,6 +4,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteBackground } from "@/components/site-background";
 import { IntroSplash } from "@/components/intro-splash";
 import { FiltersProvider } from "@/components/filters-ui";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <SiteHeader />
           {children}
         </FiltersProvider>
+        <Analytics />
       </body>
     </html>
   );
