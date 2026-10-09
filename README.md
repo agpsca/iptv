@@ -26,7 +26,8 @@ e `npm run check` (self-check do filtro e do builder M3U, sem framework).
   componentes shadcn (`Select`/`Checkbox`/`Input`, estilo `base-nova` sobre
   `@base-ui/react`) num client component que escreve o estado na URL via
   `router.push` — o SSR continua fazendo a filtragem a partir do query string.
-- **`/channel/[id]`** — metadados do canal e streams disponíveis.
+  Canal sem stream público leva o selo "sem stream" no card.
+- **`/channel/[id]`** — metadados do canal, feeds e streams disponíveis.
 - **`/playlist.m3u`** — playlist M3U estendida gerada a partir dos mesmos
   filtros da listagem. Aceita `q`, `country`, `category`, `id`, `nsfw=1`,
   `closed=1`.
@@ -37,6 +38,12 @@ curl "localhost:3000/playlist.m3u?country=BR&category=news" -o br-news.m3u
 
 Inclui `tvg-id`, `tvg-logo`, `group-title` e as linhas `#EXTVLCOPT` de
 `http-referrer` / `http-user-agent` quando o stream exige.
+
+Só entram canais com stream público. Os sem stream (Premiere, por exemplo)
+aparecem na listagem com o selo "sem stream" e ficam fora do editor e do
+arquivo — mas o editor deixa adicionar grupos e canais à mão (título + URL),
+nomear o arquivo e mostra quantos itens estão sem URL válida, que o `buildM3U`
+descarta.
 
 ## Estrutura
 

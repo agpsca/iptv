@@ -24,6 +24,14 @@ export const clean = (value: string) =>
 export const isPlayableUrl = (url: string) =>
   /^https?:\/\/[^\s"]+$/.test(url.trim());
 
+export function playlistFilename(name: string, fallback: string): string {
+  const base =
+    name.trim().replace(/[\u0000-\u001f\u007f"/\\]+/g, "-") ||
+    fallback.trim() ||
+    "playlist";
+  return base.endsWith(".m3u") ? base : `${base}.m3u`;
+}
+
 function extinf(item: PlaylistItem): string {
   const attrs = [
     ["tvg-id", item.tvgId],

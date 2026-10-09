@@ -6,6 +6,7 @@ import {
   getChannels,
   getCountries,
   getLogoMap,
+  getStreams,
   parseFilters,
 } from "@/lib/iptv";
 import { ChannelCard } from "@/components/channel-card";
@@ -40,14 +41,19 @@ export default async function Home({
   const rawPage = Array.isArray(sp.page) ? sp.page[0] : sp.page;
   const page = Math.max(1, Number(rawPage) || 1);
 
-  const [channels, countries, categories, logos] = await Promise.all([
+  const [channels, countries, categories, logos, streams] = await Promise.all([
     getChannels(),
     getCountries(),
     getCategories(),
     getLogoMap(),
+    getStreams(),
   ]);
 
   const countryName = new Map(countries.map((c) => [c.code, c]));
+  // Canais sem stream ganham selo no card: ficam fora do editor e do M3U.
+  const streamed = new Set(
+    streams.flatMap((s) => (s.channel ? [s.channel] : [])),
+  );
   const found = filterChannels(channels, filters);
   const pages = Math.max(1, Math.ceil(found.length / PER_PAGE));
   const current = Math.min(page, pages);
@@ -89,7 +95,7 @@ export default async function Home({
         categories={categories}
       />
 
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+      <div className="mt-5 mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-baseline gap-2">
           <span className="text-foreground text-lg font-semibold">
             {found.length.toLocaleString("pt-BR")}
@@ -121,6 +127,7 @@ export default async function Home({
               channel={channel}
               logo={logos.get(channel.id)}
               country={countryName.get(channel.country)}
+              hasStream={streamed.has(channel.id)}
             />
           ))}
         </ul>

@@ -1,7 +1,6 @@
-/** Check do filtro: `node src/lib/iptv.check.ts` (type stripping nativo do Node 22+). */
 import assert from "node:assert/strict";
 import { filterChannels, parseFilters, type Channel } from "./iptv.ts";
-import { buildM3U, isPlayableUrl } from "./m3u.ts";
+import { buildM3U, isPlayableUrl, playlistFilename } from "./m3u.ts";
 
 const ch = (over: Partial<Channel>): Channel => ({
   id: "X.br",
@@ -113,11 +112,33 @@ for (const bad of ["javascript:alert(1)", "http://a.tv/ b", "", "a.tv/x.m3u8"]) 
 }
 assert.equal(isPlayableUrl(" https://a.tv/x.m3u8 "), true);
 
+assert.equal(
+  buildM3U([
+    { url: "rtmp://89.28.25.122/live/tnt_md", title: "Z" },
+    { url: "http://a.tv/s.m3u8", title: "A" },
+  ]),
+  "#EXTM3U\n#EXTINF:-1,A\nhttp://a.tv/s.m3u8\n",
+);
+
 // Referrer inválido é omitido sem derrubar a entrada.
 const badRef = buildM3U([
   { url: "http://a.tv/s.m3u8", title: "A", referrer: "nao-é-url" },
 ]);
 assert.equal(badRef.includes("http-referrer"), false);
 assert.equal(badRef.includes("http://a.tv/s.m3u8"), true);
+
+// --- Nome do arquivo baixado ---
+
+assert.equal(playlistFilename("Meus canais", "BR"), "Meus canais.m3u");
+// Extensão não é duplicada.
+assert.equal(playlistFilename("lista.m3u", "BR"), "lista.m3u");
+// Vazio / só espaço cai no nome derivado dos filtros, e depois no padrão.
+assert.equal(playlistFilename("   ", "BR-news"), "BR-news.m3u");
+assert.equal(playlistFilename("", ""), "playlist.m3u");
+// Separadores de caminho e controles não escapam do nome do arquivo.
+assert.equal(playlistFilename("../../etc/passwd", "BR"), "..-..-etc-passwd.m3u");
+assert.equal(playlistFilename("a\\b", "BR"), "a-b.m3u");
+assert.equal(playlistFilename("a\nb", "BR"), "a-b.m3u");
+assert.equal(playlistFilename('as"pas', "BR"), "as-pas.m3u");
 
 console.log("ok");

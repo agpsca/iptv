@@ -26,7 +26,7 @@ export function PlaylistDialog({ filters }: { filters: Filters }) {
 
   return (
     <Dialog open={playlistOpen} onOpenChange={setPlaylistOpen}>
-      <DialogContent className="flex h-[88vh] max-h-[88vh] w-[92vw] max-w-[92vw] flex-col gap-4 sm:max-w-5xl">
+      <DialogContent className="flex h-[88vh] max-h-[88vh] w-[92vw] max-w-[92vw] flex-col gap-6 p-5 sm:max-w-5xl sm:p-6">
         <DialogHeader>
           <DialogTitle>Editor da playlist M3U</DialogTitle>
           <DialogDescription>
@@ -35,7 +35,6 @@ export function PlaylistDialog({ filters }: { filters: Filters }) {
           </DialogDescription>
         </DialogHeader>
 
-        {/* key={jsonHref}: recarrega/reseta o editor quando os filtros mudam. */}
         {playlistOpen && (
           <PlaylistEditor
             key={jsonHref}

@@ -24,11 +24,29 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Download, GripVertical, Loader2, Trash2 } from "lucide-react";
-import { buildM3U, type PlaylistItem } from "@/lib/m3u-core";
+import {
+  ChevronRight,
+  Download,
+  GripVertical,
+  Loader2,
+  Plus,
+  Trash2,
+} from "lucide-react";
+import {
+  buildM3U,
+  isPlayableUrl,
+  playlistFilename,
+  type PlaylistItem,
+} from "@/lib/m3u-core";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from "@/components/ui/input-group";
 import { cn } from "@/lib/utils";
 
 type EditorItem = PlaylistItem & { _id: string };
@@ -76,11 +94,11 @@ function findGroupIndexByItem(groups: Group[], itemId: string): number {
 
 function SortableItem({
   item,
-  onRename,
+  onPatch,
   onRemove,
 }: {
   item: EditorItem;
-  onRename: (title: string) => void;
+  onPatch: (patch: Partial<PlaylistItem>) => void;
   onRemove: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
@@ -91,7 +109,7 @@ function SortableItem({
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        "group/row bg-card/40 flex items-center gap-1.5 px-1.5 py-1.5 sm:gap-2 sm:px-2",
+        "group/row bg-card/40 flex items-center gap-2.5 px-3 py-2",
         isDragging && "opacity-40",
       )}
     >
@@ -104,16 +122,25 @@ function SortableItem({
       >
         <GripVertical className="size-4" />
       </button>
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 space-y-0.5">
         <Input
           aria-label="Título do canal"
           value={item.title}
-          onChange={(e) => onRename(e.currentTarget.value)}
+          placeholder="Nome do canal"
+          onChange={(e) => onPatch({ title: e.currentTarget.value })}
           className="h-8 border-transparent bg-transparent shadow-none hover:bg-background/50 focus-visible:bg-background dark:bg-transparent dark:hover:bg-input/30"
         />
-        <p className="text-muted-foreground mt-0.5 truncate pl-2.5 text-xs">
-          {item.url}
-        </p>
+        <Input
+          aria-label="URL do stream"
+          value={item.url}
+          placeholder="https://… (sem URL o canal não entra no arquivo)"
+          // Vazio só mostra o placeholder; o vermelho fica para URL inválida.
+          aria-invalid={
+            item.url.trim() !== "" && !isPlayableUrl(item.url) ? true : undefined
+          }
+          onChange={(e) => onPatch({ url: e.currentTarget.value })}
+          className="text-muted-foreground h-7 border-transparent bg-transparent text-xs shadow-none hover:bg-background/50 focus-visible:bg-background md:text-xs dark:bg-transparent dark:hover:bg-input/30"
+        />
       </div>
       <Button
         type="button"
@@ -131,17 +158,24 @@ function SortableItem({
 
 function SortableGroup({
   group,
+  open,
+  onToggle,
   onRename,
   onRemove,
+  onAddItem,
   children,
 }: {
   group: Group;
+  open: boolean;
+  onToggle: () => void;
   onRename: (name: string) => void;
   onRemove: () => void;
+  onAddItem: () => void;
   children: React.ReactNode;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: GROUP_PREFIX + group.id, data: { type: "group" } });
+  const listId = React.useId();
 
   return (
     <section
@@ -152,7 +186,7 @@ function SortableGroup({
         isDragging && "opacity-50",
       )}
     >
-      <header className="bg-muted/30 flex items-center gap-1.5 px-1.5 py-1.5 sm:px-2">
+      <header className="bg-muted/30 flex items-center gap-2 px-2 py-2">
         <button
           type="button"
           aria-label="Arrastar grupo"
@@ -162,9 +196,22 @@ function SortableGroup({
         >
           <GripVertical className="size-4" />
         </button>
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={open}
+          aria-controls={listId}
+          aria-label={open ? "Recolher grupo" : "Expandir grupo"}
+          className="text-muted-foreground hover:text-foreground hover:bg-background/50 flex size-7 shrink-0 items-center justify-center rounded-md transition-colors"
+        >
+          <ChevronRight
+            className={cn("size-4 transition-transform", open && "rotate-90")}
+          />
+        </button>
         <Input
           aria-label="Nome do grupo"
           value={group.name}
+          placeholder="Nome do grupo"
           onChange={(e) => onRename(e.currentTarget.value)}
           className="h-8 min-w-0 flex-1 border-transparent bg-transparent font-medium shadow-none hover:bg-background/50 focus-visible:bg-background dark:bg-transparent dark:hover:bg-input/30"
         />
@@ -182,7 +229,25 @@ function SortableGroup({
           <Trash2 className="text-destructive" />
         </Button>
       </header>
-      <ul className="divide-border/60 min-h-10 divide-y">{children}</ul>
+      {open && (
+        <>
+          <ul id={listId} className="divide-border/60 min-h-12 divide-y">
+            {children}
+          </ul>
+          <div className="border-border/60 border-t px-3 py-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-foreground"
+              onClick={onAddItem}
+            >
+              <Plus />
+              Adicionar canal
+            </Button>
+          </div>
+        </>
+      )}
     </section>
   );
 }
@@ -197,6 +262,8 @@ export function PlaylistEditor({
   onClose?: () => void;
 }) {
   const [groups, setGroups] = React.useState<Group[]>([]);
+  const [listName, setListName] = React.useState(filename);
+  const [expanded, setExpanded] = React.useState<Set<string>>(new Set());
   const [status, setStatus] = React.useState<Status>("loading");
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const abortRef = React.useRef<AbortController | null>(null);
@@ -232,6 +299,10 @@ export function PlaylistEditor({
 
   const retry = () => fetchItems(true);
   const totalItems = groups.reduce((n, g) => n + g.items.length, 0);
+  const exportable = groups.reduce(
+    (n, g) => n + g.items.filter((it) => isPlayableUrl(it.url)).length,
+    0,
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -243,23 +314,45 @@ export function PlaylistEditor({
     }),
   );
 
+  const toggleGroup = (id: string) =>
+    setExpanded((s) => {
+      const next = new Set(s);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  const openGroup = (id: string) =>
+    setExpanded((s) => (s.has(id) ? s : new Set(s).add(id)));
+
   const renameGroup = (gi: number, name: string) =>
     setGroups((gs) => gs.map((g, i) => (i === gi ? { ...g, name } : g)));
   const removeGroup = (gi: number) =>
     setGroups((gs) => gs.filter((_, i) => i !== gi));
+  const addGroup = () => {
+    const id = `g${nextId()}`;
+    setGroups((gs) => [...gs, { id, name: "", items: [] }]);
+    openGroup(id); // grupo novo já aberto, senão não dá pra preencher
+  };
+  const addItem = (gi: number) =>
+    setGroups((gs) =>
+      gs.map((g, i) =>
+        i === gi
+          ? { ...g, items: [...g.items, { _id: nextId(), title: "", url: "" }] }
+          : g,
+      ),
+    );
   const removeItem = (gi: number, id: string) =>
     setGroups((gs) =>
       gs.map((g, i) =>
         i === gi ? { ...g, items: g.items.filter((x) => x._id !== id) } : g,
       ),
     );
-  const renameItem = (gi: number, id: string, title: string) =>
+  const patchItem = (gi: number, id: string, patch: Partial<PlaylistItem>) =>
     setGroups((gs) =>
       gs.map((g, i) =>
         i === gi
           ? {
               ...g,
-              items: g.items.map((x) => (x._id === id ? { ...x, title } : x)),
+              items: g.items.map((x) => (x._id === id ? { ...x, ...patch } : x)),
             }
           : g,
       ),
@@ -274,6 +367,11 @@ export function PlaylistEditor({
     const activeId = String(active.id);
     const overId = String(over.id);
     if (isGroupId(activeId)) return; // grupos tratados no end
+
+    const toId = isGroupId(overId)
+      ? overId.slice(GROUP_PREFIX.length)
+      : groups.find((g) => g.items.some((x) => x._id === overId))?.id;
+    if (toId) openGroup(toId);
 
     setGroups((gs) => {
       const fromGi = findGroupIndexByItem(gs, activeId);
@@ -329,7 +427,6 @@ export function PlaylistEditor({
       return;
     }
 
-    // Reordenar item dentro do mesmo grupo (entre-grupos já tratado no over).
     if (!isGroupId(oId)) {
       setGroups((gs) => {
         const gi = findGroupIndexByItem(gs, aId);
@@ -350,7 +447,7 @@ export function PlaylistEditor({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = filename.endsWith(".m3u") ? filename : `${filename}.m3u`;
+    a.download = playlistFilename(listName, filename);
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -372,8 +469,6 @@ export function PlaylistEditor({
     return groups.find((g) => GROUP_PREFIX + g.id === activeId) ?? null;
   }, [activeId, groups]);
 
-  // Ao arrastar um GRUPO, só considera outros grupos como alvo (senão os itens
-  // "dominam" a detecção e o over fica inválido). Itens usam closestCenter.
   const collisionDetection = React.useCallback<CollisionDetection>(
     (args) => {
       if (activeId && isGroupId(activeId)) {
@@ -415,11 +510,17 @@ export function PlaylistEditor({
 
   return (
     <>
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overflow-x-hidden pr-1">
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overflow-x-hidden pr-2">
         {groups.length === 0 ? (
-          <p className="text-muted-foreground py-12 text-center text-sm">
-            Nenhum item para editar.
-          </p>
+          <div className="flex flex-col items-center gap-4 py-16 text-center">
+            <p className="text-muted-foreground text-sm">
+              Nenhum item para editar — monte a lista do zero.
+            </p>
+            <Button type="button" variant="outline" size="sm" onClick={addGroup}>
+              <Plus />
+              Adicionar grupo
+            </Button>
+          </div>
         ) : (
           <DndContext
             sensors={sensors}
@@ -438,15 +539,18 @@ export function PlaylistEditor({
                   <SortableGroup
                     key={g.id}
                     group={g}
+                    open={expanded.has(g.id)}
+                    onToggle={() => toggleGroup(g.id)}
                     onRename={(name) => renameGroup(gi, name)}
                     onRemove={() => removeGroup(gi)}
+                    onAddItem={() => addItem(gi)}
                   >
                     <SortableContext
                       items={g.items.map((it) => it._id)}
                       strategy={verticalListSortingStrategy}
                     >
                       {g.items.length === 0 ? (
-                        <li className="text-muted-foreground/60 px-3 py-3 text-center text-xs">
+                        <li className="text-muted-foreground/60 px-3 py-5 text-center text-xs">
                           Arraste canais para cá
                         </li>
                       ) : (
@@ -454,7 +558,7 @@ export function PlaylistEditor({
                           <SortableItem
                             key={it._id}
                             item={it}
-                            onRename={(title) => renameItem(gi, it._id, title)}
+                            onPatch={(patch) => patchItem(gi, it._id, patch)}
                             onRemove={() => removeItem(gi, it._id)}
                           />
                         ))
@@ -467,12 +571,12 @@ export function PlaylistEditor({
 
             <DragOverlay>
               {activeItem ? (
-                <div className="bg-popover ring-primary/40 flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm shadow-lg ring-1">
+                <div className="bg-popover ring-primary/40 flex items-center gap-2 rounded-lg px-3 py-2 text-sm shadow-lg ring-1">
                   <GripVertical className="text-muted-foreground size-4" />
                   <span className="truncate font-medium">{activeItem.title}</span>
                 </div>
               ) : activeGroup ? (
-                <div className="bg-popover ring-primary/40 flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium shadow-lg ring-1">
+                <div className="bg-popover ring-primary/40 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium shadow-lg ring-1">
                   <GripVertical className="text-muted-foreground size-4" />
                   {activeGroup.name}
                   <Badge variant="secondary">{activeGroup.items.length}</Badge>
@@ -481,17 +585,45 @@ export function PlaylistEditor({
             </DragOverlay>
           </DndContext>
         )}
+
+        {groups.length > 0 && (
+          <Button type="button" variant="outline" size="sm" onClick={addGroup}>
+            <Plus />
+            Adicionar grupo
+          </Button>
+        )}
       </div>
 
-      <div className="border-border/60 mt-4 flex flex-col gap-2 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-muted-foreground text-xs">
+      <div className="border-border/60 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:gap-4">
+        <InputGroup className="sm:w-56">
+          <InputGroupInput
+            aria-label="Nome da lista"
+            value={listName}
+            placeholder={filename}
+            onChange={(e) => setListName(e.currentTarget.value)}
+          />
+          <InputGroupAddon align="inline-end">
+            <InputGroupText>.m3u</InputGroupText>
+          </InputGroupAddon>
+        </InputGroup>
+        <p className="text-muted-foreground text-xs sm:flex-1">
           {groups.length.toLocaleString("pt-BR")} grupo(s) ·{" "}
           {totalItems.toLocaleString("pt-BR")} canal(is)
+          {totalItems > exportable && (
+            <>
+              {" · "}
+              <span className="text-destructive">
+                {(totalItems - exportable).toLocaleString("pt-BR")} sem URL
+                válida
+              </span>{" "}
+              (ficam fora do arquivo)
+            </>
+          )}
         </p>
         <Button
           type="button"
           onClick={download}
-          disabled={totalItems === 0}
+          disabled={exportable === 0}
           className="w-full sm:w-auto"
         >
           <Download />

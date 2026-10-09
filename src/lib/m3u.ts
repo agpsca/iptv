@@ -19,11 +19,19 @@ import {
 } from "./iptv.ts";
 import { buildM3U, type PlaylistItem } from "./m3u-core.ts";
 
-export { buildM3U, isPlayableUrl, type PlaylistItem } from "./m3u-core.ts";
+export {
+  buildM3U,
+  isPlayableUrl,
+  playlistFilename,
+  type PlaylistItem,
+} from "./m3u-core.ts";
 
 /**
  * Coleta os itens de playlist a partir dos filtros, cruzando streams + canais +
  * logos + feeds. Separado da serialização para alimentar o editor (JSON).
+ *
+ * Só entram canais com stream: sem URL não há linha M3U possível. Os demais
+ * ficam sinalizados na listagem com o selo "sem stream".
  *
  * Streams com `channel: null` ficam de fora — sem ID não há como
  * aplicar filtro, logo ou EPG. Se um dia precisar, entram como grupo "Undefined".

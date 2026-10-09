@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Tv } from "lucide-react";
+import { Tv, VideoOff } from "lucide-react";
 import type { Channel, Country } from "@/lib/iptv";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,10 +8,12 @@ export function ChannelCard({
   channel,
   logo,
   country,
+  hasStream = true,
 }: {
   channel: Channel;
   logo?: string;
   country?: Country;
+  hasStream?: boolean;
 }) {
   return (
     <li>
@@ -23,8 +25,6 @@ export function ChannelCard({
           <div className="bg-muted/40 relative flex h-28 items-center justify-center overflow-hidden">
             {logo ? (
               <>
-                {/* Fundo: o próprio logo borrado e ampliado — cor sempre
-                    harmônica com o canal, sem destoar do tema. */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={logo}
@@ -47,14 +47,33 @@ export function ChannelCard({
                 className="text-muted-foreground/50 size-9 transition-transform duration-200 group-hover:scale-105"
               />
             )}
-            {channel.closed && (
+            {!hasStream && (
               <Badge
-                variant="destructive"
-                title={`Encerrado em ${channel.closed}`}
-                className="absolute top-2 right-2 shadow-sm backdrop-blur-sm"
+                variant="secondary"
+                title="Sem stream público catalogado — entra no editor sem URL, para você colar a sua"
+                className="absolute top-2 left-2 shadow-sm backdrop-blur-sm"
               >
-                encerrado
+                <VideoOff aria-hidden />
+                sem stream
               </Badge>
+            )}
+            {(channel.is_nsfw || channel.closed) && (
+              <div className="absolute top-2 right-2 flex gap-1">
+                {channel.is_nsfw && (
+                  <Badge variant="destructive" className="shadow-sm backdrop-blur-sm">
+                    NSFW
+                  </Badge>
+                )}
+                {channel.closed && (
+                  <Badge
+                    variant="destructive"
+                    title={`Encerrado em ${channel.closed}`}
+                    className="shadow-sm backdrop-blur-sm"
+                  >
+                    encerrado
+                  </Badge>
+                )}
+              </div>
             )}
           </div>
           <div className="flex flex-col gap-1 p-3">
